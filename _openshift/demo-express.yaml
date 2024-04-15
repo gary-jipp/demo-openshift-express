@@ -2,12 +2,31 @@ apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: demo-openshift-express
+
+parameters:
+- name: APP_NAME
+  description: The name of the application
+  required: true
+  value: demo-express
+- name: SOURCE_REPOSITORY_URL
+  description: Source Repository
+  required: true
+  value: https://github.com/gary-jipp/demo-openshift-express
+- name: SOURCE_REPOSITORY_REF
+  description: Source Repository
+  required: true
+  value: master
+- name: CONTEXT_DIR
+  description: Source Directory if not master
+  required: true
+  value: app
+
 objects:
 
 - apiVersion: image.openshift.io/v1
   kind: ImageStream
   metadata:
-    name: demo-express
+    name: ${APP_NAME}
   spec:
     lookupPolicy:
       local: true
@@ -15,7 +34,7 @@ objects:
 - kind: PersistentVolumeClaim
   apiVersion: v1
   metadata:
-    name: demo-storage
+    name: ${APP_NAME}-storage
   spec:
     accessModes:
       - ReadWriteOnce
@@ -27,14 +46,14 @@ objects:
   apiVersion: build.openshift.io/v1
   metadata:
     labels:
-      app: demo-express
-    name: demo-express
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
     source:
-      contextDir: app
+      contextDir: ${CONTEXT_DIR}
       git:
-        ref: master
-        uri: https://github.com/gary-jipp/demo-openshift-express
+        ref: ${SOURCE_REPOSITORY_REF}
+        uri: ${SOURCE_REPOSITORY_URL}
     strategy:
       dockerStrategy:
         from:
@@ -43,28 +62,28 @@ objects:
     output:
       to:
         kind: ImageStreamTag
-        name: demo-express:latest
+        name: ${APP_NAME}:latest
 
 - kind: Deployment
   apiVersion: apps/v1
   metadata:
     annotations:
-      image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"demo-express:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"demo-express\")].image"}]'
-    name: demo-express
+      image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"${APP_NAME}:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"${APP_NAME}\")].image"}]'
+    name: ${APP_NAME}
     # namespace: crt-redhat2304-dev
   spec:
     replicas: 2
     selector:
       matchLabels:
-        deployment: demo-express
+        deployment: ${APP_NAME}
     template:
       metadata:
         labels:
-          deployment: demo-express
+          deployment: ${APP_NAME}
       spec:
         containers:
-          - name: demo-express
-            image: 'demo-express:latest'
+          - name: ${APP_NAME}
+            image: ${APP_NAME}:latest
             ports:
               - containerPort: 8080
                 protocol: TCP
@@ -73,9 +92,9 @@ objects:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: demo-express
+    name: ${APP_NAME}
     labels:
-      app: demo-express
+      app: ${APP_NAME}
   spec:
     ipFamilies:
       - IPv4
@@ -86,17 +105,17 @@ objects:
         targetPort: 8080
     type: ClusterIP
     selector:
-      deployment: demo-express
+      deployment: ${APP_NAME}
 
 - kind: Route
   apiVersion: route.openshift.io/v1
   metadata:
-    name: demo-express
+    name: ${APP_NAME}
     labels: {}
   spec:
     to:
       kind: Service
-      name: demo-express
+      name: ${APP_NAME}
     tls: null
     port:
       targetPort: 8080
