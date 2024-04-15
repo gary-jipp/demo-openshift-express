@@ -19,7 +19,7 @@ oc start-build demo-express
 ```
 
 ## add redeploy trigger for when image changes
-## Not needed with thie template, alreasdy included
+## Not needed with this template, already included
 ```bash
 oc set triggers deploy/demo-express --from-image=demo-express:latest -c demo-express
 ```
