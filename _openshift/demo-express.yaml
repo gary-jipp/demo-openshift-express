@@ -4,6 +4,25 @@ metadata:
   name: demo-openshift-express
 objects:
 
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: demo-express
+  spec:
+    lookupPolicy:
+      local: true
+
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: demo-storage
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 50Mi
+
 - kind: BuildConfig
   apiVersion: build.openshift.io/v1
   metadata:

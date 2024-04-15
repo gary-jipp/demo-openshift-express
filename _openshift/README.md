@@ -1,24 +1,11 @@
 # Openshift CLI
 
-Use these scripts to perform the initial OpenShift setup and initial deployment.  Subsequent builds and deployments triggered by GitHub Actions.
+Use Template to perform the initial OpenShift setup and initial deployment.  Subsequent builds and deployments triggered by GitHub Actions.
 
-#### OC Command line: easy but less control
+## Create imagestream for node16
 ```bash
-oc login --token=<your token> --server=<your server>
-oc new-build --name=demo-express --strategy=docker --code=<github repo>
-oc new-app demo-express:latest
-oc expose service/demo-express
-```
-
-#### OC Command line: using individual yaml files
-```bash
-oc login --token=<token> --server=<server>  # Login with credentials
-oc get imagestreams             # See what images we have registered
-oc create imagestream demo-express  # Create an IS for our build if needed
-oc apply -f 1-buildconfig.yaml  # Create the buildconfig for the image
-oc apply -f 2-deployment.yaml   # Create deployment
-oc apply -f 3-service.yaml      # Add Service for this deployment
-oc apply -f 4-route.yaml        # Create a route to expose the service
+ oc import-image node:16-alpine --from=node:16-alpine --confirm
+ oc set image-lookup imagestream/node   ## Allow local lookups
 ```
 
 ## Create everything using a template
@@ -32,13 +19,7 @@ oc start-build demo-express
 ```
 
 ## add redeploy trigger for when image changes
+## Not needed with thie template, alreasdy included
 ```bash
 oc set triggers deploy/demo-express --from-image=demo-express:latest -c demo-express
-```
-
-## Can Add persistent storage volume to deployment
-```bash
-oc set volumes deployment/demo-express --add --name demo-volume --type pvc --claim-name demo-storage --mount-path /mnt/demo
-
-oc set volumes deployment/demo-express --add --name demo-volume -t pvc --claim-name demo-storage -m /mnt/demo
 ```
